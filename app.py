@@ -33,12 +33,6 @@ from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
 from TTS.utils.generic_utils import get_user_data_dir
 
-HF_TOKEN = os.environ.get("HF_TOKEN")
-
-from huggingface_hub import HfApi
-
-# will use api to restart space on a unrecoverable error
-api = HfApi(token=HF_TOKEN)
 repo_id = "coqui/xtts"
 
 # Use never ffmpeg binary for Ubuntu20 to use denoising for microphone input
@@ -215,14 +209,6 @@ def predict(
             print(
                 f"Unrecoverable exception caused by language:{DEVICE_ASSERT_LANG} prompt:{DEVICE_ASSERT_PROMPT}"
             )
-
-            # HF Space specific.. This error is unrecoverable need to restart space
-            space = api.get_space_runtime(repo_id=repo_id)
-            if space.stage!="BUILDING":
-                api.restart_space(repo_id=repo_id)
-            else:
-                print("TRIED TO RESTART but space is building")
-
         try:
             metrics_text = ""
             t_latent = time.time()
@@ -367,13 +353,6 @@ def predict(
                     repo_id="coqui/xtts-flagged-dataset",
                     repo_type="dataset",
                 )
-
-                # HF Space specific.. This error is unrecoverable need to restart space
-                space = api.get_space_runtime(repo_id=repo_id)
-                if space.stage!="BUILDING":
-                    api.restart_space(repo_id=repo_id)
-                else:
-                    print("TRIED TO RESTART but space is building")
                     
             else:
                 if "Failed to decode" in str(e):
@@ -691,7 +670,7 @@ with gr.Blocks(analytics_enabled=False) as demo:
             )
             tos_gr = gr.Checkbox(
                 label="Agree",
-                value=False,
+                value=True,
                 info="I agree to the terms of the Coqui Public Model License at https://coqui.ai/cpml",
             )
 
